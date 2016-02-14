@@ -136,7 +136,6 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
     if isinstance(cHmesh, str):
         cHmesh = morphic.Mesh(cHmesh)
     
-    Xi3d = numpy.mgrid[0:4, 0:4, 0:4] * (1./3.)
     Xi3d = numpy.array([Xi3d[2, :, :].flatten(),
             Xi3d[1, :, :].flatten(), Xi3d[0, :, :].flatten()]).T
     Xi2d = numpy.mgrid[0:4, 0:4] * (1./3.)

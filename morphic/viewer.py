@@ -9,10 +9,13 @@ except:
 
 if not mlab_loaded :
     try:
-        from enthought.mayavi import mlab
+        from mayavi import mlab
     except ImportError:
         print 'Enthought Mayavi mlab module not found'
         raise
+
+def set_offscreen(offscreen):
+    mlab.options.offscreen = offscreen
 
 class Figure:
     
@@ -91,7 +94,7 @@ class Figure:
             mlab.roll(roll)
             self.figure.scene.disable_render = False
             
-    def plot_lines(self, label, X, color=None, size=0):
+    def plot_lines(self, label, X, color=None, size=0, opacity=1.):
         
         nPoints = 0
         for x in X:
@@ -122,7 +125,7 @@ class Figure:
             mlab.pipeline.surface(self.plots[label], color=(1, 1, 1),
                               representation='wireframe',
                               line_width=size,
-                              name='Connections')
+                              name='Connections', opacity=opacity)
         else:
             self.figure.scene.disable_render = True
             self.clear(label)
@@ -132,7 +135,7 @@ class Figure:
             mlab.pipeline.surface(self.plots[label], color=color,
                               representation='wireframe',
                               line_width=size,
-                              name='Connections')
+                              name='Connections', opacity=opacity)
             self.figure.scene.disable_render = False
         
             
@@ -237,7 +240,7 @@ class Figure:
             self.figure.scene.disable_render = False
             
             
-    def plot_text(self, label, X, text, size=1):
+    def plot_text(self, label, X, text, size=1, color=(1,1,1)):
         view = mlab.view()
         roll = mlab.roll()
         self.figure.scene.disable_render = True
@@ -255,7 +258,7 @@ class Figure:
         if mlab_objs == None:
             text_objs = []
             for x, t in zip(X, text):
-                text_objs.append(mlab.text3d(x[0], x[1], x[2], str(t), scale=scale))
+                text_objs.append(mlab.text3d(x[0], x[1], x[2], str(t), scale=scale, color=color))
             self.plots[label] = text_objs
         elif len(mlab_objs) == len(text):
             for i, obj in enumerate(mlab_objs):
@@ -265,157 +268,62 @@ class Figure:
         else:
             print "HELP, I shouldn\'t be here!!!!!"
         
-        self.figure.scene.disable_render = False
         mlab.view(*view)
         mlab.roll(roll)
+        self.figure.scene.disable_render = False
 
-    def plot_dicoms(self, label, dicom_files):
-        scan = self._load_dicom_attributes(dicom_files)
+    def plot_element_ids(self, label, mesh, size=1, color=(1,1,1)):
+        Xecids = mesh.get_element_cids()
+        for idx, element in enumerate(mesh.elements):
+            Xp = element.evaluate([0.5,0.5], deriv=None)
+            self.plot_text('{0}{1}'.format(
+                label, element.id), [Xp], [element.id], size=5, color=color)
+
+    def plot_image_data(self, label, scan, src, vis_object):
 
         mlab.figure(self.figure.name)
         
         mlab_objs = self.plots.get(label)
         if mlab_objs == None:
-            src = mlab.pipeline.scalar_field(scan.values)
-            src.origin = scan.origin
-            src.spacing = scan.spacing
-            plane = mlab.pipeline.image_plane_widget(src,
-                                plane_orientation='z_axes',
-                                slice_index=int(0.5 * scan.num_slices),
-                                colormap='black-white')
             self.plots[label] = {}
             self.plots[label]['src'] = src
-            self.plots[label]['plane'] = plane
+            self.plots[label]['plane'] = vis_object
             self.plots[label]['filepaths'] = scan.filepaths
         else:
-            self.plots[label]['src'].origin = scan.origin
+            #self.plots[label]['src'].origin = scan.origin
             self.plots[label]['src'].spacing = scan.spacing
             self.plots[label]['src'].scalar_data = scan.values
             self.plots[label]['plane'].update_pipeline()
             self.plots[label]['filepaths'] = scan.filepaths
 
-    def _load_dicom_attributes(self, dicom_files):
-        import dicom
+    def visualise_dicom_plane(self, fig, scan, src, op):
+        plane = mlab.pipeline.image_plane_widget(src,
+                            plane_orientation='z_axes',
+                            slice_index=int(0.5 * scan.num_slices),
+                            colormap='black-white')
+        fig.plot_image_data(op.volunteer, scan, src, plane)
+        return plane
 
-        class Scan(object):
+    def visualise_dicom_outline(self, scan, src):
+        outline = mlab.pipeline.outline(src)
+        return outline
 
-            def __init__(self):
-                self.num_slices = 0
-                self.origin = numpy.array([0.,0.,0.])
-                self.spacing = numpy.array([1.,1.,1.])
-                self.filepaths = []
-                self.values = None
+    def visualise_dicom_volume(self, scan, src):
+        volume = mlab.pipeline.volume(src)
+        return volume
 
-            def set_origin(self, values):
-                self.origin = numpy.array([float(v) for v in values])
+    def plot_vector(self, pt, vector, size=1, color=(1,0,0), scale=1):
+          mlab.figure(self.figure.name)
+          mlab.quiver3d(pt[0], pt[1], pt[2],
+              vector[0], vector[1], vector[2],
+              line_width=size, color=color, scale_factor=scale)
+    
 
-            def set_pixel_spacing(self, values):
-                self.spacing[0] = float(values[0])
-                self.spacing[1] = float(values[1])
-
-            def set_slice_thickness(self, value):
-                self.spacing[2] = float(value)
-
-            def init_values(self, rows, cols, slices):
-                self.num_slices = slices
-                self.values = numpy.zeros((rows, cols, slices))
-
-            def insert_slice(self, index, values):
-                self.values[:,:,index] = values
-
-        import os
-        if isinstance(dicom_files, str):
-            dicom_path = dicom_files
-            dicom_files = os.listdir(dicom_path)
-            for i, filename in enumerate(dicom_files):
-                dicom_files[i] = os.path.join(dicom_path, dicom_files[i])
-
-        scan = Scan()
-        slice_location_tag = (0x0020, 0x1041)
-        slice_thickness_tag = (0x0018, 0x0050)
-        image_position_tag = (0x0020, 0x0032)
-        image_orientation_tag = (0x0020, 0x0037)
-        pixel_spacing_tag = (0x0028, 0x0030)
-        rows_tag = (0x0028, 0x0010)
-        cols_tag = (0x0028, 0x0011)
-        slice_location = []
-        slice_thickness = []
-        image_position = []
-        remove_files = []
-        for i, dicom_file in enumerate(dicom_files):
-            try:
-                dcm = dicom.read_file(dicom_file)
-                valid_dicom = True
-            except dicom.filereader.InvalidDicomError:
-                remove_files.append(i)
-                valid_dicom = False
-
-            if valid_dicom:
-                dcmtags = dcm.keys()
-                if slice_location_tag in dcmtags:
-                    slice_location.append(float(dcm[slice_location_tag].value))
-                else:
-                    print 'No slice location found in ' + dicom_file
-                    return
-                if slice_thickness_tag in dcmtags:
-                    slice_thickness.append(float(dcm[slice_thickness_tag].value))
-                else:
-                    print 'No slice thickness found in ' + dicom_file
-                    return
-                if image_position_tag in dcmtags:
-                    image_position.append([float(v)
-                        for v in dcm[image_position_tag].value])
-                else:
-                    print 'No image_position found in ' + dicom_file
-                    return
-
-        # Remove files that are not dicoms
-        remove_files.reverse()
-        for index in remove_files:
-            dicom_files.pop(index)
-
-        slice_location = numpy.array(slice_location)
-        slice_thickness = numpy.array(slice_thickness)
-        image_position = numpy.array(image_position)
-
-        sorted_index = numpy.array(slice_location).argsort()
-        dt = []
-        for i,zi in enumerate(sorted_index[:-1]):
-            i0 = sorted_index[i]
-            i1 = sorted_index[i+1]
-            dt.append(slice_location[i1] - slice_location[i0])
-        dt = numpy.array(dt)
-
-        if slice_thickness.std() > 1e-6 or dt.std() > 1e-6:
-            print 'Warning: slices are not regularly spaced'
-
-        scan.set_slice_thickness(slice_thickness[0])
-
-        if pixel_spacing_tag in dcmtags:
-            scan.set_pixel_spacing(dcm[pixel_spacing_tag].value)
-        else:
-            print 'No pixel spacing vlaues found in' + dicom_file
-            return
-
-        scan.set_origin(image_position.min(0))
-
-        if rows_tag in dcmtags:
-            rows = int(dcm[rows_tag].value)
-        else:
-            print 'Number of rows not found in ' + dicom_file
-            return
-        if cols_tag in dcmtags:
-            cols = int(dcm[cols_tag].value)
-        else:
-            print 'Number of cols not found in ' + dicom_file
-            return
-
-        scan.init_values(rows, cols, slice_location.shape[0])
-        for i, index in enumerate(sorted_index):
-            scan.filepaths.append(dicom_files[index])
-            scan.insert_slice(i, dicom.read_file(dicom_files[index]).pixel_array[:,::-1])
-
-        return scan
-
-
-
+def define_scalar_field(x,y,z,scan):
+    #import ipdb; ipdb.set_trace()
+    #print scan.values.shape
+    src = mlab.pipeline.scalar_field(x,y,z,scan.values)
+#    src = mlab.pipeline.scalar_field(scan.values)
+    #src.spacing = scan.spacing
+    #import ipdb; ipdb.set_trace()
+    return src

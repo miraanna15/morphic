@@ -1620,6 +1620,9 @@ class Mesh(object):
         return self.evaluate(element_ids, xi, deriv=deriv)
 
     def evaluate(self, element_ids, xi, deriv=None):
+        '''
+        Evaluate all xi for each element
+        '''
         self.generate()
         if isinstance(xi, list):
             xi = numpy.array(xi)
@@ -1642,6 +1645,33 @@ class Mesh(object):
         for element in self.elements[element_ids]:
             X[ind:ind + num_xi, :] = element.evaluate(xi, deriv=deriv)
             ind += num_xi
+
+        return X
+
+    def evaluate2(self, element_ids, xi, deriv=None):
+        '''
+        Evaluate element/xi pairs
+        '''
+        self.generate()
+        if isinstance(xi, list):
+            xi = numpy.array(xi)
+            if len(xi.shape) == 1:
+                xi = numpy.array([xi]).T
+        else:
+            if len(xi.shape) == 1:
+                xi = numpy.array([xi]).T
+
+        if not isinstance(element_ids, list):
+            element_ids = [element_ids]
+
+        node0 = self.elements[element_ids[0]].nodes[0]
+        num_fields = node0.num_fields
+        num_elements = len(element_ids)
+        num_xi = xi.shape[0]
+        X = numpy.zeros((num_elements, num_fields))
+
+        for ind, element in enumerate(self.elements[element_ids]):
+            X[ind, :] = element.evaluate(xi[ind], deriv=deriv)
 
         return X
 
@@ -1694,7 +1724,7 @@ class Mesh(object):
         return discretizer.xi_grid(
             shape=shape, res=res, units='div', method=method)[0]
 
-    def get_nodes(self, nodes=None, group='_default'):
+    def get_nodes(self, nodes=None, group='_default', deriv=None):
         self.generate()
         if nodes != None:
             if not isinstance(nodes, list):
@@ -1707,7 +1737,10 @@ class Mesh(object):
             if len(node.shape) == 1:
                 Xn.append(node.values)
             else:
-                Xn.append(node.values[:, 0])
+                if deriv == None:
+                    Xn.append(node.values[:, 0])
+                else:
+                    Xn.append(node.values[:, deriv])
         return numpy.array([xn for xn in Xn])
 
     def get_node_ids(self, nodes=None, group='_default'):
