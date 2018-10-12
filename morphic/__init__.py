@@ -1,16 +1,17 @@
-from mesher import Mesh
-from data import Data
-from fitter import Fit
-from fasteval import FEMatrix
+from importlib import reload
+from morphic.mesher import Mesh
+from morphic.data import Data
+from morphic.fitter import Fit
+from morphic.fasteval import FEMatrix
 
 reload_modules = True
 if reload_modules:
-    import mesher
-    reload(mesher)
-    import interpolator
-    reload(interpolator)
-    from mesher import Mesh
-    import fitter
-    reload(fitter)
-    from fitter import Fit
+    import morphic.mesher
+    reload(morphic.mesher)
+    import morphic.interpolator
+    reload(morphic.interpolator)
+    from morphic.mesher import Mesh
+    import morphic.fitter
+    reload(morphic.fitter)
+    from morphic.fitter import Fit
 

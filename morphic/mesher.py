@@ -32,10 +32,7 @@ import numpy
 
 from scipy import linalg
 
-import core
-import discretizer
-import metadata
-import utils
+from morphic import core, discretizer, metadata, utils
 
 
 class Values(numpy.ndarray):
@@ -427,7 +424,7 @@ class Element(object):
     def interp(self):
         import traceback
 
-        print 'Deprecated. Use \'basis\' instead'
+        print('Deprecated. Use \'basis\' instead')
         traceback.print_stack(file=sys.stdout)
         return self.basis
 
@@ -435,7 +432,7 @@ class Element(object):
     def interp(self, basis):
         import traceback
 
-        print 'Deprecated. Use \'basis\' instead'
+        print('Deprecated. Use \'basis\' instead')
         traceback.print_stack(file=sys.stdout)
         self._interp = basis
 
@@ -543,7 +540,7 @@ class Element(object):
     def compute_weighted_sum(self, xi, field, deriv=None):
         rhs = 0
         weights = self.weights(xi, deriv)[0]
-        print 'w', weights
+        print('w', weights)
         cids = self.core.EMap[self.cid]
         for idx, node in enumerate(self.nodes):
             if node._type == 'dependent':
@@ -552,7 +549,7 @@ class Element(object):
         return 1, 1, rhs
 
     def interpolate(self, xi, deriv=None):
-        print 'Interpolate deprecated. Use evaluate instead.'
+        print('Interpolate deprecated. Use evaluate instead.')
         return self.evaluate(xi, deriv=deriv)
 
     def evaluate(self, xi, deriv=None):
@@ -915,7 +912,7 @@ class Mesh(object):
         >>> mesh = Mesh()
         >>> mesh.nodes.set_counter(1)
         >>> id = mesh.nodes.get_unique_id()
-        >>> print id
+        >>> print(id)
         1
         
         There are two forms for entering node values for the variable x:
@@ -928,11 +925,11 @@ class Mesh(object):
         >>> node1 = mesh.add_stdnode(1, [0.2, 0.1, 3.], group='xyz')
         >>> node2 = mesh.add_stdnode(None, [0.1], group='xi')
         >>> node3 = mesh.add_stdnode(None, [0.2], group='xi')
-        >>> print node1.id, node1.values
+        >>> print(node1.id, node1.values)
         1 [ 0.2  0.1  3. ]
-        >>> print node2.id, node2.values
+        >>> print(node2.id, node2.values)
         0 [ 0.1]
-        >>> print node3.id, node3.values
+        >>> print(node3.id, node3.values)
         2 [ 0.2]
         
         '''
@@ -961,7 +958,7 @@ class Mesh(object):
         >>> elem1 = mesh.add_element('elem1', ['L1'], [1, 2])
         >>> hang1 = mesh.add_stdnode('xi', [0.6]) # element location
         >>> node3 = mesh.add_depnode(3, 'elem1', 'xi') # hanging node
-        >>> print mesh.get_nodes([3])
+        >>> print(mesh.get_nodes([3]))
         [[ 1.2  0.6]]
 
         :param uid:
@@ -1032,7 +1029,7 @@ class Mesh(object):
         >>> n1 = mesh.add_stdnode(1, [0.1])
         >>> n2 = mesh.add_stdnode(2, [0.2])
         >>> elem = mesh.add_element(1, ['L1'], [1, 2])
-        >>> print elem.id, elem.basis, elem.node_ids
+        >>> print(elem.id, elem.basis, elem.node_ids)
         1 ['L1'] [1, 2]
         """
         if uid == None:
@@ -1644,7 +1641,7 @@ class Mesh(object):
         self._core.update_params(param_ids, values)
 
     def interpolate(self, element_ids, xi, deriv=None):
-        print 'Interpolate deprecated. Use evaluate instead.'
+        print('Interpolate deprecated. Use evaluate instead.')
         return self.evaluate(element_ids, xi, deriv=deriv)
 
     def evaluate(self, element_ids, xi, deriv=None):
@@ -2012,7 +2009,7 @@ class Mesh(object):
                 nids.append(node.id)
                 if isinstance(node, DepNode):
                     if node.element not in elements:
-                        print "Warning: Dependent node element is not included in the list of elements to copy"
+                        print("Warning: Dependent node element is not included in the list of elements to copy")
                     nids.append(node.node)
                 elif isinstance(node, PCANode):
                     if node.weights_id not in nids:
@@ -2126,4 +2123,4 @@ class Mesh(object):
 
     def debug(self, msg):
         if self.debug_on:
-            print msg
+            print(msg)
