@@ -1313,10 +1313,10 @@ class Mesh(object):
         h5f = tables.open_file(filepath, 'r')
 
         self.version = get_attribute(h5f.root, 'version')
-        self.created_at = get_attribute(h5f.root, 'created_at').decode()
-        self.saved_at = get_attribute(h5f.root, 'saved_at').decode()
-        self.label = get_attribute(h5f.root, 'label').decode()
-        self.units = get_attribute(h5f.root, 'units')
+        self.created_at = get_attribute(h5f.root, 'created_at').encode().decode()
+        self.saved_at = get_attribute(h5f.root, 'saved_at').encode().decode()
+        self.label = get_attribute(h5f.root, 'label').encode().decode()
+        self.units = get_attribute(h5f.root, 'units').encode().decode()
 
         if 'metadata' in h5f.root:
             self.metadata.load_pytables(h5f.root.metadata)
@@ -2152,7 +2152,7 @@ class Mesh(object):
             V += element.volume()
         return V
 
-    def export(self, filepath, element_ids='all', simplify=True, precision='%0.6f', format='json'):
+
     def export(self, filepath, element_ids='all', node_ids=[], precision='%0.6f', format='json'):
 
         def get_node_values_str(node, precision, space):
