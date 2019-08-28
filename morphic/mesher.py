@@ -912,7 +912,7 @@ class Mesh(object):
         >>> mesh = Mesh()
         >>> mesh.nodes.set_counter(1)
         >>> id = mesh.nodes.get_unique_id()
-        >>> print id
+        >>> print(id)
         1
         
         There are two forms for entering node values for the variable x:
@@ -925,11 +925,11 @@ class Mesh(object):
         >>> node1 = mesh.add_stdnode(1, [0.2, 0.1, 3.], group='xyz')
         >>> node2 = mesh.add_stdnode(None, [0.1], group='xi')
         >>> node3 = mesh.add_stdnode(None, [0.2], group='xi')
-        >>> print node1.id, node1.values
+        >>> print(node1.id, node1.values)
         1 [ 0.2  0.1  3. ]
-        >>> print node2.id, node2.values
+        >>> print(node2.id, node2.values)
         0 [ 0.1]
-        >>> print node3.id, node3.values
+        >>> print(node3.id, node3.values)
         2 [ 0.2]
         
         '''
@@ -958,7 +958,7 @@ class Mesh(object):
         >>> elem1 = mesh.add_element('elem1', ['L1'], [1, 2])
         >>> hang1 = mesh.add_stdnode('xi', [0.6]) # element location
         >>> node3 = mesh.add_depnode(3, 'elem1', 'xi') # hanging node
-        >>> print mesh.get_nodes([3])
+        >>> print(mesh.get_nodes([3]))
         [[ 1.2  0.6]]
 
         :param uid:
@@ -1029,7 +1029,7 @@ class Mesh(object):
         >>> n1 = mesh.add_stdnode(1, [0.1])
         >>> n2 = mesh.add_stdnode(2, [0.2])
         >>> elem = mesh.add_element(1, ['L1'], [1, 2])
-        >>> print elem.id, elem.basis, elem.node_ids
+        >>> print(elem.id, elem.basis, elem.node_ids)
         1 ['L1'] [1, 2]
         """
         if uid == None:
