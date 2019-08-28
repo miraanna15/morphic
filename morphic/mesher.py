@@ -1338,7 +1338,7 @@ class Mesh(object):
                 values = numpy.zeros(parse_shape(h5node))
                 node = StdNode(self, node_id, values)
                 node.cids = node_pids[h5node['pids'][0]:h5node['pids'][1]]
-                self.nodes.add(node)
+                self.nodes.add(node,group = '_default')
 
             elif h5node['type'].decode() == 'dependent':
                 node = DepNode(self, node_id,
@@ -1360,7 +1360,7 @@ class Mesh(object):
             elem_id = parse_id(h5elem)
             self.add_element(elem_id, h5elem['basis'].decode().split(' '),
                              [nodemap[nidx] for nidx in
-                              elem_node[h5elem['node_ids'][0]:h5elem['node_ids'][1]]])
+                              elem_node[h5elem['node_ids'][0]:h5elem['node_ids'][1]]], group = '_default')
 
         group_ids = h5f.root.node_group_ids.read()
         for h5group in h5f.root.node_groups.iterrows():
@@ -1657,10 +1657,10 @@ class Mesh(object):
         if isinstance(xi, list):
             xi = numpy.array(xi)
             if len(xi.shape) == 1:
-                xi = numpy.array([xi]).T
+                xi = numpy.array([xi])
         else:
             if len(xi.shape) == 1:
-                xi = numpy.array([xi]).T
+                xi = numpy.array([xi])
 
         if not isinstance(element_ids, list):
             element_ids = [element_ids]
