@@ -32,10 +32,7 @@ import numpy
 
 from scipy import linalg
 
-from morphic import core
-from morphic import discretizer
-from morphic import metadata
-from morphic import utils
+from morphic import core, discretizer, metadata, utils
 
 
 class Values(numpy.ndarray):

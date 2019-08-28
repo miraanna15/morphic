@@ -162,7 +162,7 @@ class ObjectList:
         self._id_counter = value
         
     def get_unique_id(self, random_chars=0):
-        existing_ids = self._object_ids.keys()
+        existing_ids = list(self._object_ids)
         if random_chars > 0:
             random_id = existing_ids[0]
             while random_id in existing_ids:
@@ -211,19 +211,7 @@ class ObjectList:
         for group in groups:
             objs.extend(self._get_group(group))
         return [obj for obj in set(objs)]
-
-    def get_group_ids(self, groups):
-        if not isinstance(groups, list):
-            groups = [groups]
-        objs = []
-        for group in groups:
-            objs.extend(self._get_group(group))
-        all_objs = [obj for obj in set(objs)]
-        obj_ids = []
-        for obj in all_objs:
-            obj_ids.append(obj.id)
-        return obj_ids
-
+    
     def _save_dict(self):
         objlist_dict = {}
         objlist_dict['groups'] = {}
