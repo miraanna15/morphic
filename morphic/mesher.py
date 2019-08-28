@@ -1921,7 +1921,8 @@ class Mesh(object):
         elif not isinstance(elements, list):
             elements = elements
 
-        element_nodes = [[0, 1], [2, 3], [0, 2], [1, 3], [4, 5], [6, 7], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [4, 7]]
+        element_nodes = [[0, 1], [2, 3], [0, 2], [1, 3], [4, 5], [6, 7], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6],
+                         [4, 7]]
         line_ids = []
         for eid in elements:
             element = self.elements[eid]
@@ -1933,7 +1934,8 @@ class Mesh(object):
                 num_lines = range(4)
             elif element_dimensions == 3:
                 if internal_lines and element.basis == ['L3', 'L3', 'L3']:
-                    element_nodes = [[0, 1], [2, 3], [0, 2], [1, 3], [4, 5], [6, 7], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [4, 7]]
+                    element_nodes = [[0, 1], [2, 3], [0, 2], [1, 3], [4, 5], [6, 7], [4, 6], [5, 7], [0, 4], [1, 5],
+                                     [2, 6], [4, 7]]
                     num_lines = range(48)
                 else:
                     num_lines = range(12)
@@ -2151,6 +2153,7 @@ class Mesh(object):
         return V
 
     def export(self, filepath, element_ids='all', simplify=True, precision='%0.6f', format='json'):
+    def export(self, filepath, element_ids='all', node_ids=[], precision='%0.6f', format='json'):
 
         def get_node_values_str(node, precision, space):
             node_id = '"%d"' % node.id if isinstance(node.id, int) else '"%s"' % node.id
@@ -2206,6 +2209,10 @@ class Mesh(object):
             for nid in element.node_ids:
                 if nid not in elements_node_ids:
                     elements_node_ids.append(nid)
+
+        for nid in node_ids:
+            if nid not in elements_node_ids:
+                elements_node_ids.append(nid)
 
         fp = open(filepath, 'w')
 
