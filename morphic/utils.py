@@ -1,7 +1,5 @@
 import numpy
 import morphic
-from scipy.spatial import cKDTree
-
 class PCAMesh(object):
 
     def __init__(self, groups=None):
@@ -148,11 +146,12 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
     for node in cHmesh.nodes:
         nid += 1
         xn = node.values[:, 0]
-        mesh.add_stdnode(nid, xn, '_default')
+        mesh.add_node(nid, xn)
         X.append(xn)
-
+    
     for element in cHmesh.elements:
         element_nodes = []
+        from scipy.spatial import cKDTree
         tree = cKDTree(X)
         dims = element_dimensions(element.basis)
         if dims == 1:
@@ -162,7 +161,7 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
                 r, index = tree.query(xg.tolist())
                 if r > tol:
                     nid += 1
-                    mesh.add_stdnode(nid, xg)
+                    mesh.add_node(nid, xg)
                     X.append(xg)
                     element_nodes.append(nid)
                 else:
@@ -176,7 +175,7 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
                 r, index = tree.query(xg.tolist())
                 if r > tol:
                     nid += 1
-                    mesh.add_stdnode(nid, xg)
+                    mesh.add_node(nid, xg)
                     X.append(xg)
                     element_nodes.append(nid)
                 else:
@@ -189,16 +188,16 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
                 r, index = tree.query(xg.tolist())
                 if r > tol:
                     nid += 1
-                    mesh.add_stdnode(nid, xg, '_default')
+                    mesh.add_node(nid, xg)
                     X.append(xg)
                     element_nodes.append(nid)
                 else:
                     element_nodes.append(index + 1)
             eid += 1
-            mesh.add_element(eid, ['L3', 'L3', 'L3'], element_nodes, '_default')
+            mesh.add_element(eid, ['L3', 'L3', 'L3'], element_nodes)
         else:
             raise ValueError('Element conversion: element dimension not supported')
-
+    
     mesh.generate()
     
     return mesh

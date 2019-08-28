@@ -211,7 +211,19 @@ class ObjectList:
         for group in groups:
             objs.extend(self._get_group(group))
         return [obj for obj in set(objs)]
-    
+
+    def get_group_ids(self, groups):
+        if not isinstance(groups, list):
+            groups = [groups]
+        objs = []
+        for group in groups:
+            objs.extend(self._get_group(group))
+        all_objs = [obj for obj in set(objs)]
+        obj_ids = []
+        for obj in all_objs:
+            obj_ids.append(obj.id)
+        return obj_ids
+
     def _save_dict(self):
         objlist_dict = {}
         objlist_dict['groups'] = {}

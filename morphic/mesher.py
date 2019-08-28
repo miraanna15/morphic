@@ -32,7 +32,10 @@ import numpy
 
 from scipy import linalg
 
-from morphic import core, discretizer, metadata, utils
+from morphic import core
+from morphic import discretizer
+from morphic import metadata
+from morphic import utils
 
 
 class Values(numpy.ndarray):
@@ -912,7 +915,7 @@ class Mesh(object):
         >>> mesh = Mesh()
         >>> mesh.nodes.set_counter(1)
         >>> id = mesh.nodes.get_unique_id()
-        >>> print(id)
+        >>> print id
         1
         
         There are two forms for entering node values for the variable x:
@@ -925,11 +928,11 @@ class Mesh(object):
         >>> node1 = mesh.add_stdnode(1, [0.2, 0.1, 3.], group='xyz')
         >>> node2 = mesh.add_stdnode(None, [0.1], group='xi')
         >>> node3 = mesh.add_stdnode(None, [0.2], group='xi')
-        >>> print(node1.id, node1.values)
+        >>> print node1.id, node1.values
         1 [ 0.2  0.1  3. ]
-        >>> print(node2.id, node2.values)
+        >>> print node2.id, node2.values
         0 [ 0.1]
-        >>> print(node3.id, node3.values)
+        >>> print node3.id, node3.values
         2 [ 0.2]
         
         '''
@@ -958,7 +961,7 @@ class Mesh(object):
         >>> elem1 = mesh.add_element('elem1', ['L1'], [1, 2])
         >>> hang1 = mesh.add_stdnode('xi', [0.6]) # element location
         >>> node3 = mesh.add_depnode(3, 'elem1', 'xi') # hanging node
-        >>> print(mesh.get_nodes([3]))
+        >>> print mesh.get_nodes([3])
         [[ 1.2  0.6]]
 
         :param uid:
@@ -1029,7 +1032,7 @@ class Mesh(object):
         >>> n1 = mesh.add_stdnode(1, [0.1])
         >>> n2 = mesh.add_stdnode(2, [0.2])
         >>> elem = mesh.add_element(1, ['L1'], [1, 2])
-        >>> print(elem.id, elem.basis, elem.node_ids)
+        >>> print elem.id, elem.basis, elem.node_ids
         1 ['L1'] [1, 2]
         """
         if uid == None:
@@ -1141,8 +1144,8 @@ class Mesh(object):
         import pickle
         import tables
 
-        if tables.isHDF5File(filepath):
-            if tables.isPyTablesFile(filepath):
+        if tables.is_hdf5_file(filepath):
+            if tables.is_pytables_file(filepath):
                 self._load_pytables(filepath)
             else:
                 self._load_h5py(filepath)
@@ -1187,9 +1190,9 @@ class Mesh(object):
         h5f = tables.open_file(filepath, 'w')
         filters = tables.Filters(complevel=5, complib='zlib', shuffle=True)
         h5f.set_node_attr(h5f.root, 'version', self.version)
-        h5f.set_node_attr(h5f.root, 'created_at', self.created_at)
-        h5f.set_node_attr(h5f.root, 'saved_at', datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC"))
-        h5f.set_node_attr(h5f.root, 'label', self.label)
+        h5f.set_node_attr(h5f.root, 'created_at', self.created_at.encode())
+        h5f.set_node_attr(h5f.root, 'saved_at', datetime.datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC").encode())
+        h5f.set_node_attr(h5f.root, 'label', self.label.encode())
         h5f.set_node_attr(h5f.root, 'units', self.units)
 
         metadata_node = h5f.create_group(h5f.root, 'metadata')
@@ -1313,9 +1316,9 @@ class Mesh(object):
         h5f = tables.open_file(filepath, 'r')
 
         self.version = get_attribute(h5f.root, 'version')
-        self.created_at = get_attribute(h5f.root, 'created_at')
-        self.saved_at = get_attribute(h5f.root, 'saved_at')
-        self.label = get_attribute(h5f.root, 'label')
+        self.created_at = get_attribute(h5f.root, 'created_at').decode()
+        self.saved_at = get_attribute(h5f.root, 'saved_at').decode()
+        self.label = get_attribute(h5f.root, 'label').decode()
         self.units = get_attribute(h5f.root, 'units')
 
         if 'metadata' in h5f.root:
@@ -1334,13 +1337,13 @@ class Mesh(object):
         for nn, h5node in enumerate(h5f.root.nodes.iterrows()):
             node_id = parse_id(h5node)
 
-            if h5node['type'] == 'standard':
+            if h5node['type'].decode() == 'standard':
                 values = numpy.zeros(parse_shape(h5node))
                 node = StdNode(self, node_id, values)
                 node.cids = node_pids[h5node['pids'][0]:h5node['pids'][1]]
                 self.nodes.add(node)
 
-            elif h5node['type'] == 'dependent':
+            elif h5node['type'].decode() == 'dependent':
                 node = DepNode(self, node_id,
                                elemmap[h5node['element_id']], nodemap[h5node['node_id']])
                 node.shape = parse_shape(h5node)
@@ -1348,7 +1351,7 @@ class Mesh(object):
                 node._added = True
                 self.nodes.add(node)
 
-            elif h5node['type'] == 'pca':
+            elif h5node['type'].decode() == 'pca':
                 node = PCANode(self, node_id, nodemap[h5node['node_id']],
                                nodemap[h5node['weights_id']], nodemap[h5node['variance_id']])
                 self.nodes.add(node)
@@ -1358,7 +1361,7 @@ class Mesh(object):
 
         for ne, h5elem in enumerate(h5f.root.elements.iterrows()):
             elem_id = parse_id(h5elem)
-            self.add_element(elem_id, h5elem['basis'].split(' '),
+            self.add_element(elem_id, h5elem['basis'].decode().split(' '),
                              [nodemap[nidx] for nidx in
                               elem_node[h5elem['node_ids'][0]:h5elem['node_ids'][1]]])
 
@@ -1637,6 +1640,14 @@ class Mesh(object):
             cids.append(elem.cid)
         return cids
 
+    def get_element_ids(self, elements=None):
+        if elements == None:
+            elements = self.elements
+        ids = []
+        for elem in elements:
+            ids.append(elem.id)
+        return ids
+
     def update_parameters(self, param_ids, values):
         self._core.update_params(param_ids, values)
 
@@ -1754,7 +1765,7 @@ class Mesh(object):
                 Xn.append(node.values[:, 0])
         return numpy.array([xn for xn in Xn])
 
-    def get_node_ids(self, nodes=None, group='_default'):
+    def get_node_ids(self, nodes=None, group=b'_default'):
         self.generate()
         if nodes != None:
             if not isinstance(nodes, list):
@@ -1906,12 +1917,12 @@ class Mesh(object):
             return X, T, Xi
         return X, T
 
-    def get_lines(self, res=8, elements='all'):
+    def get_lines(self, res=8, elements='all', internal_lines=False):
         lines = []
         if elements == 'all':
             elements = self.elements.keys()
         elif not isinstance(elements, list):
-            elements = [elements]
+            elements = elements
 
         element_nodes = [[0, 1], [2, 3], [0, 2], [1, 3], [4, 5], [6, 7], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [4, 7]]
         line_ids = []
@@ -1924,25 +1935,126 @@ class Mesh(object):
             elif element_dimensions == 2:
                 num_lines = range(4)
             elif element_dimensions == 3:
-                num_lines = range(12)
+                if internal_lines and element.basis == ['L3', 'L3', 'L3']:
+                    element_nodes = [[0, 1], [2, 3], [0, 2], [1, 3], [4, 5], [6, 7], [4, 6], [5, 7], [0, 4], [1, 5], [2, 6], [4, 7]]
+                    num_lines = range(48)
+                else:
+                    num_lines = range(12)
+                #import ipdb; ipdb.set_trace()
             line_index = []
             for lidx in num_lines:
-                enode = element_nodes[lidx]
-                if node_ids[enode[0]] < node_ids[enode[1]]:
-                    line_id = str(node_ids[enode[0]]) + '-' + str(node_ids[enode[1]])
-                else:
-                    line_id = str(node_ids[enode[1]]) + '-' + str(node_ids[enode[0]])
-                if line_id not in line_ids:
-                    line_index.append(lidx)
-                    line_ids.append(line_id)
+#                enode = element_nodes[lidx]
+#                if node_ids[enode[0]] < node_ids[enode[1]]:
+#                    line_id = str(node_ids[enode[0]]) + '-' + str(node_ids[enode[1]])
+#                else:
+#                    line_id = str(node_ids[enode[1]]) + '-' + str(node_ids[enode[0]])
+#                if line_id not in line_ids:
+#                    line_index.append(lidx)
+#                    line_ids.append(line_id)
+                line_index.append(lidx)
+                line_ids.append(str(element.id) + '-line-' + str(lidx))
             if len(line_index) > 0:
-                lines = self.append_lines(lines, eid, line_index, res=res)
+                lines = self.append_lines(lines, eid, line_index, res=res, internal_lines=internal_lines)
         return lines
 
-    def append_lines(self, lines, elements, lindex, res=8):
-        L = ((None, 0, 0), (None, 1, 0), (0, None, 0), (1, None, 0),
-             (None, 0, 1), (None, 1, 1), (0, None, 1), (1, None, 1),
-             (0, 0, None), (1, 0, None), (0, 1, None), (1, 1, None))
+#    def append_lines(self, lines, elements, lindex, res=8):
+#        L = ((None, 0, 0), (None, 1, 0), (0, None, 0), (1, None, 0),
+#             (None, 0, 1), (None, 1, 1), (0, None, 1), (1, None, 1),
+#             (0, 0, None), (1, 0, None), (0, 1, None), (1, 1, None))
+
+#        if isinstance(elements, int):
+#            elements = [elements]
+#        elif isinstance(elements, str):
+#            elements = [elements]
+#        if isinstance(lindex, int):
+#            lindex = [lindex]
+
+#        xi01 = numpy.linspace(0, 1, res)
+#        for eid in elements:
+#            xi_dimensions = len(self.elements[eid].basis)
+#            for lidx in lindex:
+#                Xi = numpy.zeros((res, xi_dimensions))
+#                for i, x in enumerate(L[lidx][:xi_dimensions]):
+#                    if x is None:
+#                        Xi[:, i] = xi01
+#                    else:
+#                        Xi[:, i] = x
+#                lines.append(self.elements[eid].evaluate(Xi))
+#        return lines
+
+    def append_lines(self, lines, elements, lindex, res=8, internal_lines=False):
+        if internal_lines:
+            L = (
+                 # z layer 1
+                 (None, 0,     0), 
+                 (None, 1./3., 0), 
+                 (None, 2./3., 0), 
+                 (None, 1,     0), 
+                 (0,     None, 0), 
+                 (1./3., None, 0),
+                 (2./3., None, 0),
+                 (1,     None, 0),
+                 # z layer 2
+                 (None, 0,     1./3.), 
+                 (None, 1./3., 1./3.), 
+                 (None, 2./3., 1./3.), 
+                 (None, 1,     1./3.), 
+                 (0,     None, 1./3.), 
+                 (1./3., None, 1./3.),
+                 (2./3., None, 1./3.),
+                 (1,     None, 1./3.),
+                 # z layer 3
+                 (None, 0,     2./3.), 
+                 (None, 1./3., 2./3.), 
+                 (None, 2./3., 2./3.), 
+                 (None, 1,     2./3.), 
+                 (0,     None, 2./3.), 
+                 (1./3., None, 2./3.),
+                 (2./3., None, 2./3.),
+                 (1,     None, 2./3.),
+                 # z layer 4
+                 (None, 0,     1), 
+                 (None, 1./3., 1), 
+                 (None, 2./3., 1), 
+                 (None, 1,     1), 
+                 (0,     None, 1), 
+                 (1./3., None, 1),
+                 (2./3., None, 1),
+                 (1,     None, 1),
+
+                 (0,     0, None), 
+                 (1./3., 0, None), 
+                 (2./3., 0, None), 
+                 (1,     0, None), 
+
+                 (0,     1./3., None), 
+                 (1./3., 1./3., None), 
+                 (2./3., 1./3., None), 
+                 (1,     1./3., None), 
+
+                 (0,     2./3., None), 
+                 (1./3., 2./3., None), 
+                 (2./3., 2./3., None), 
+                 (1,     2./3., None), 
+
+                 (0,     1, None), 
+                 (1./3., 1, None), 
+                 (2./3., 1, None), 
+                 (1,     1, None), 
+             )
+        else:
+            L = ((None, 0, 0), 
+                 (None, 1, 0), 
+                 (0, None, 0), 
+                 (1, None, 0),
+                 (None, 0, 1), 
+                 (None, 1, 1), 
+                 (0, None, 1), 
+                 (1, None, 1),
+                 (0, 0, None), 
+                 (1, 0, None), 
+                 (0, 1, None), 
+                 (1, 1, None))
 
         if isinstance(elements, int):
             elements = [elements]
@@ -2041,10 +2153,7 @@ class Mesh(object):
             V += element.volume()
         return V
 
-    def export_data(self, filepath, precision='%0.3f', format='json'):
-        pass
-
-    def export(self, filepath, element_ids='all', node_ids=[], precision='%0.6f', format='json'):
+    def export(self, filepath, element_ids='all', simplify=True, precision='%0.6f', format='json'):
 
         def get_node_values_str(node, precision, space):
             node_id = '"%d"' % node.id if isinstance(node.id, int) else '"%s"' % node.id
@@ -2100,10 +2209,6 @@ class Mesh(object):
             for nid in element.node_ids:
                 if nid not in elements_node_ids:
                     elements_node_ids.append(nid)
-
-        for nid in node_ids:
-            if nid not in elements_node_ids:
-                elements_node_ids.append(nid)
 
         fp = open(filepath, 'w')
 
