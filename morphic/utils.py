@@ -1,5 +1,6 @@
 import numpy
 import morphic
+from scipy.spatial import cKDTree
 
 class PCAMesh(object):
 
@@ -93,7 +94,7 @@ class PCAMesh(object):
             x[:, :, 1:] = self.components[idx:idx+nsize,:].reshape(pca_node_shape) # mode values
             return x
         else:
-            print 'Cannot reshape this node when genrating pca mesh'
+            print('Cannot reshape this node when genrating pca mesh')
 
 
 def grid(divs=10, dims=2):
@@ -147,15 +148,15 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
     for node in cHmesh.nodes:
         nid += 1
         xn = node.values[:, 0]
-        mesh.add_stdnode(nid, xn)
+        mesh.add_stdnode(nid, xn, '_default')
         X.append(xn)
-    
+
     for element in cHmesh.elements:
         element_nodes = []
         tree = cKDTree(X)
         dims = element_dimensions(element.basis)
         if dims == 1:
-            print "1D element conversion unchecked"
+            print("1D element conversion unchecked")
             Xg = element.evaluate(Xi1d)
             for xg in Xg:
                 r, index = tree.query(xg.tolist())
@@ -169,7 +170,7 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
             eid += 1
             mesh.add_element(eid, ['L3'], element_nodes)
         elif dims == 2:
-            print "2D element conversion unchecked"
+            print("2D element conversion unchecked")
             Xg = element.evaluate(Xi2d)
             for xg in Xg:
                 r, index = tree.query(xg.tolist())
@@ -188,16 +189,16 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
                 r, index = tree.query(xg.tolist())
                 if r > tol:
                     nid += 1
-                    mesh.add_stdnode(nid, xg)
+                    mesh.add_stdnode(nid, xg, '_default')
                     X.append(xg)
                     element_nodes.append(nid)
                 else:
                     element_nodes.append(index + 1)
             eid += 1
-            mesh.add_element(eid, ['L3', 'L3', 'L3'], element_nodes)
+            mesh.add_element(eid, ['L3', 'L3', 'L3'], element_nodes, '_default')
         else:
             raise ValueError('Element conversion: element dimension not supported')
-    
+
     mesh.generate()
     
     return mesh

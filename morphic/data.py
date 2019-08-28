@@ -1,6 +1,6 @@
 import os
 import numpy
-import metadata
+from morphic import metadata
 
 
 class Data:
@@ -24,7 +24,7 @@ class Data:
             else:
                 self.load_hdf5(filepath)
         else:
-            print 'Data file does not exist'
+            print('Data file does not exist')
 
     def save(self, filepath, type='hdf5'):
         self.save_hdf5(filepath)

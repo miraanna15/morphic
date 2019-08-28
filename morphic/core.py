@@ -1,7 +1,7 @@
 """
 This module manages the low level parameters describing the mesh.
 """
-import interpolator
+from morphic import interpolator
 import string
 import random
 import numpy
@@ -462,5 +462,5 @@ class Core(object):
 
     def debug(self, msg):
         if self.debug_on:
-            print msg
+            print(msg)
 
