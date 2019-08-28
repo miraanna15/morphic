@@ -11,13 +11,13 @@ if not mlab_loaded :
     try:
         from enthought.mayavi import mlab
     except ImportError:
-        print 'Enthought Mayavi mlab module not found'
+        print('Enthought Mayavi mlab module not found')
         raise
 
 class Figure:
     
-    def __init__(self, figure='Default', bgcolor=(.5,.5,.5)):
-        self.figure = mlab.figure(figure, bgcolor=bgcolor)
+    def __init__(self, figure='Default', bgcolor=(.5,.5,.5),size=(400, 400)):
+        self.figure = mlab.figure(figure, bgcolor=bgcolor, size=size)
         self.plots = {}
         
     def clear(self, label=None):
@@ -91,7 +91,7 @@ class Figure:
             mlab.roll(roll)
             self.figure.scene.disable_render = False
             
-    def plot_lines(self, label, X, color=None, size=0):
+    def plot_lines(self, label, X, color=None, size=0, opacity=1.):
         
         nPoints = 0
         for x in X:
@@ -119,10 +119,10 @@ class Figure:
         if mlab_obj == None:
             self.plots[label] = mlab.points3d(Xl[:,0], Xl[:,1], Xl[:,2], color=color, scale_factor=0)
             self.plots[label].mlab_source.dataset.lines = connections
-            mlab.pipeline.surface(self.plots[label], color=(1, 1, 1),
+            mlab.pipeline.surface(self.plots[label], color=(0, 0, 0),
                               representation='wireframe',
                               line_width=size,
-                              name='Connections')
+                              name='Connections', opacity=opacity)
         else:
             self.figure.scene.disable_render = True
             self.clear(label)
@@ -237,7 +237,7 @@ class Figure:
             self.figure.scene.disable_render = False
             
             
-    def plot_text(self, label, X, text, size=1):
+    def plot_text(self, label, X, text, size=1, color=(1,1,1)):
         view = mlab.view()
         roll = mlab.roll()
         self.figure.scene.disable_render = True
@@ -255,7 +255,7 @@ class Figure:
         if mlab_objs == None:
             text_objs = []
             for x, t in zip(X, text):
-                text_objs.append(mlab.text3d(x[0], x[1], x[2], str(t), scale=scale))
+                text_objs.append(mlab.text3d(x[0], x[1], x[2], str(t), scale=scale, color=color))
             self.plots[label] = text_objs
         elif len(mlab_objs) == len(text):
             for i, obj in enumerate(mlab_objs):
@@ -263,14 +263,21 @@ class Figure:
                 obj.text = str(text[i])
                 obj.scale = scale
         else:
-            print "HELP, I shouldn\'t be here!!!!!"
+            print("HELP, I shouldn\'t be here!!!!!")
         
-        self.figure.scene.disable_render = False
         mlab.view(*view)
         mlab.roll(roll)
+        self.figure.scene.disable_render = False
 
-    def plot_dicoms(self, label, dicom_files):
-        scan = self._load_dicom_attributes(dicom_files)
+    def plot_element_ids(self, label, mesh, size=1, color=(1,1,1)):
+        Xecids = mesh.get_element_cids()
+        for idx, element in enumerate(mesh.elements):
+            Xp = element.evaluate([0.5,0.5], deriv=None)
+            self.plot_text('{0}{1}'.format(
+                label, element.id), [Xp], [element.id], size=5, color=color)
+
+    def plot_dicoms(self, label, scan):
+        #scan = self._load_dicom_attributes(dicom_files)
 
         mlab.figure(self.figure.name)
         
@@ -355,18 +362,18 @@ class Figure:
                 if slice_location_tag in dcmtags:
                     slice_location.append(float(dcm[slice_location_tag].value))
                 else:
-                    print 'No slice location found in ' + dicom_file
+                    print('No slice location found in ' + dicom_file)
                     return
                 if slice_thickness_tag in dcmtags:
                     slice_thickness.append(float(dcm[slice_thickness_tag].value))
                 else:
-                    print 'No slice thickness found in ' + dicom_file
+                    print('No slice thickness found in ' + dicom_file)
                     return
                 if image_position_tag in dcmtags:
                     image_position.append([float(v)
                         for v in dcm[image_position_tag].value])
                 else:
-                    print 'No image_position found in ' + dicom_file
+                    print('No image_position found in ' + dicom_file)
                     return
 
         # Remove files that are not dicoms
@@ -387,14 +394,14 @@ class Figure:
         dt = numpy.array(dt)
 
         if slice_thickness.std() > 1e-6 or dt.std() > 1e-6:
-            print 'Warning: slices are not regularly spaced'
+            print('Warning: slices are not regularly spaced')
 
         scan.set_slice_thickness(slice_thickness[0])
 
         if pixel_spacing_tag in dcmtags:
             scan.set_pixel_spacing(dcm[pixel_spacing_tag].value)
         else:
-            print 'No pixel spacing vlaues found in' + dicom_file
+            print('No pixel spacing vlaues found in' + dicom_file)
             return
 
         scan.set_origin(image_position.min(0))
@@ -402,12 +409,12 @@ class Figure:
         if rows_tag in dcmtags:
             rows = int(dcm[rows_tag].value)
         else:
-            print 'Number of rows not found in ' + dicom_file
+            print('Number of rows not found in ' + dicom_file)
             return
         if cols_tag in dcmtags:
             cols = int(dcm[cols_tag].value)
         else:
-            print 'Number of cols not found in ' + dicom_file
+            print('Number of cols not found in ' + dicom_file)
             return
 
         scan.init_values(rows, cols, slice_location.shape[0])
