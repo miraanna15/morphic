@@ -33,8 +33,10 @@ class Metadata(object):
             self.__dict__[key] = value
             
     def save_pytables(self, node):
-        for key, value in self.items():
-            node._v_attrs[key] = value
+        if self:
+            for key, value in self.items():
+                node._v_attrs[key] = value
+
             
     def load_pytables(self, node):
         a = node._AttributeSet(node)

@@ -1,5 +1,7 @@
 import numpy
 import morphic
+from scipy.spatial import cKDTree
+
 class PCAMesh(object):
 
     def __init__(self, groups=None):
@@ -146,9 +148,9 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
     for node in cHmesh.nodes:
         nid += 1
         xn = node.values[:, 0]
-        mesh.add_node(nid, xn)
+        mesh.add_stdnode(nid, xn, '_default')
         X.append(xn)
-    
+
     for element in cHmesh.elements:
         element_nodes = []
         from scipy.spatial import cKDTree
@@ -161,7 +163,7 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
                 r, index = tree.query(xg.tolist())
                 if r > tol:
                     nid += 1
-                    mesh.add_node(nid, xg)
+                    mesh.add_stdnode(nid, xg)
                     X.append(xg)
                     element_nodes.append(nid)
                 else:
@@ -175,7 +177,7 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
                 r, index = tree.query(xg.tolist())
                 if r > tol:
                     nid += 1
-                    mesh.add_node(nid, xg)
+                    mesh.add_stdnode(nid, xg)
                     X.append(xg)
                     element_nodes.append(nid)
                 else:
@@ -188,13 +190,13 @@ def convert_hermite_lagrange(cHmesh, tol=1e-9):
                 r, index = tree.query(xg.tolist())
                 if r > tol:
                     nid += 1
-                    mesh.add_node(nid, xg)
+                    mesh.add_stdnode(nid, xg, '_default')
                     X.append(xg)
                     element_nodes.append(nid)
                 else:
                     element_nodes.append(index + 1)
             eid += 1
-            mesh.add_element(eid, ['L3', 'L3', 'L3'], element_nodes)
+            mesh.add_element(eid, ['L3', 'L3', 'L3'], element_nodes, '_default')
         else:
             raise ValueError('Element conversion: element dimension not supported')
     

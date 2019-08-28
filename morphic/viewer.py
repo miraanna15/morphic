@@ -91,7 +91,7 @@ class Figure:
             mlab.roll(roll)
             self.figure.scene.disable_render = False
             
-    def plot_lines(self, label, X, color=None, size=0, opacity=1.):
+    def plot_lines(self, label, X, color=None, size=0, opacity = 1.):
         
         nPoints = 0
         for x in X:
@@ -117,19 +117,19 @@ class Figure:
         
         mlab_obj = self.plots.get(label)
         if mlab_obj == None:
-            self.plots[label] = mlab.points3d(Xl[:,0], Xl[:,1], Xl[:,2], color=color, scale_factor=0)
+            self.plots[label] = mlab.points3d(Xl[:,0], Xl[:,1], Xl[:,2], color=color, scale_factor=0, opacity = opacity)
             self.plots[label].mlab_source.dataset.lines = connections
-            mlab.pipeline.surface(self.plots[label], color=(0, 0, 0),
+            mlab.pipeline.surface(self.plots[label], color=(1, 1, 1),opacity = opacity,
                               representation='wireframe',
                               line_width=size,
-                              name='Connections', opacity=opacity)
+                              name='Connections')
         else:
             self.figure.scene.disable_render = True
             self.clear(label)
-            self.plots[label] = mlab.points3d(Xl[:,0], Xl[:,1], Xl[:,2], color=color, scale_factor=0)
+            self.plots[label] = mlab.points3d(Xl[:,0], Xl[:,1], Xl[:,2], color=color, scale_factor=0, opacity = opacity)
             self.plots[label].mlab_source.dataset.lines = connections
             #~ self.plots[label].mlab_source.update()
-            mlab.pipeline.surface(self.plots[label], color=color,
+            mlab.pipeline.surface(self.plots[label], color=color,opacity = opacity,
                               representation='wireframe',
                               line_width=size,
                               name='Connections')
@@ -177,7 +177,7 @@ class Figure:
             #~ mlab.view(*view)
             self.figure.scene.disable_render = False
             
-    def plot_points(self, label, X, color=None, size=None, mode=None):
+    def plot_points(self, label, X, color=None, size=None, mode=None, alpha = 1):
         
         mlab.figure(self.figure.name)
         
@@ -201,9 +201,11 @@ class Figure:
         mlab_obj = self.plots.get(label)
         if mlab_obj == None:
             if isinstance(color, tuple):
-                self.plots[label] = mlab.points3d(X[:,0], X[:,1], X[:,2], color=color, scale_factor=size, mode=mode)
+                self.plots[label] = mlab.points3d(X[:,0], X[:,1], X[:,2], color=color, scale_factor=size, mode=mode,
+                                                  opacity = alpha)
             else:
-                self.plots[label] = mlab.points3d(X[:,0], X[:,1], X[:,2], color, scale_factor=size, scale_mode='none', mode=mode)
+                self.plots[label] = mlab.points3d(X[:,0], X[:,1], X[:,2], color, scale_factor=size, scale_mode='none',
+                                                  mode=mode, opacity = alpha)
         
         else:
             self.figure.scene.disable_render = True
@@ -228,16 +230,18 @@ class Figure:
             
             self.clear(label)
             if isinstance(color, tuple):
-                self.plots[label] = mlab.points3d(X[:,0], X[:,1], X[:,2], color=color, scale_factor=size, mode=mode)
+                self.plots[label] = mlab.points3d(X[:,0], X[:,1], X[:,2], color=color, scale_factor=size,
+                                                  mode=mode,opacity = alpha)
             else:
-                self.plots[label] = mlab.points3d(X[:,0], X[:,1], X[:,2], color, scale_factor=size, scale_mode='none', mode=mode)
+                self.plots[label] = mlab.points3d(X[:,0], X[:,1], X[:,2], color, scale_factor=size, scale_mode='none',
+                                                  mode=mode, opacity = alpha)
                 
             mlab.view(*view)
             mlab.roll(roll)
             self.figure.scene.disable_render = False
             
             
-    def plot_text(self, label, X, text, size=1, color=(1,1,1)):
+    def plot_text(self, label, X, text, size=1, color = (1,1,1)):
         view = mlab.view()
         roll = mlab.roll()
         self.figure.scene.disable_render = True
@@ -255,7 +259,7 @@ class Figure:
         if mlab_objs == None:
             text_objs = []
             for x, t in zip(X, text):
-                text_objs.append(mlab.text3d(x[0], x[1], x[2], str(t), scale=scale, color=color))
+                text_objs.append(mlab.text3d(x[0], x[1], x[2], str(t), scale=scale,color=color))
             self.plots[label] = text_objs
         elif len(mlab_objs) == len(text):
             for i, obj in enumerate(mlab_objs):
@@ -263,7 +267,7 @@ class Figure:
                 obj.text = str(text[i])
                 obj.scale = scale
         else:
-            print("HELP, I shouldn\'t be here!!!!!")
+            print ("HELP, I shouldn\'t be here!!!!!")
         
         mlab.view(*view)
         mlab.roll(roll)
@@ -358,22 +362,22 @@ class Figure:
                 valid_dicom = False
 
             if valid_dicom:
-                dcmtags = dcm.keys()
+                dcmtags = list(dcm)
                 if slice_location_tag in dcmtags:
                     slice_location.append(float(dcm[slice_location_tag].value))
                 else:
-                    print('No slice location found in ' + dicom_file)
+                    print ('No slice location found in ' + dicom_file)
                     return
                 if slice_thickness_tag in dcmtags:
                     slice_thickness.append(float(dcm[slice_thickness_tag].value))
                 else:
-                    print('No slice thickness found in ' + dicom_file)
+                    print ('No slice thickness found in ' + dicom_file)
                     return
                 if image_position_tag in dcmtags:
                     image_position.append([float(v)
                         for v in dcm[image_position_tag].value])
                 else:
-                    print('No image_position found in ' + dicom_file)
+                    print ('No image_position found in ' + dicom_file)
                     return
 
         # Remove files that are not dicoms
@@ -394,14 +398,14 @@ class Figure:
         dt = numpy.array(dt)
 
         if slice_thickness.std() > 1e-6 or dt.std() > 1e-6:
-            print('Warning: slices are not regularly spaced')
+            print ('Warning: slices are not regularly spaced')
 
         scan.set_slice_thickness(slice_thickness[0])
 
         if pixel_spacing_tag in dcmtags:
             scan.set_pixel_spacing(dcm[pixel_spacing_tag].value)
         else:
-            print('No pixel spacing vlaues found in' + dicom_file)
+            print ('No pixel spacing vlaues found in' + dicom_file)
             return
 
         scan.set_origin(image_position.min(0))
@@ -409,12 +413,12 @@ class Figure:
         if rows_tag in dcmtags:
             rows = int(dcm[rows_tag].value)
         else:
-            print('Number of rows not found in ' + dicom_file)
+            print ('Number of rows not found in ' + dicom_file)
             return
         if cols_tag in dcmtags:
             cols = int(dcm[cols_tag].value)
         else:
-            print('Number of cols not found in ' + dicom_file)
+            print ('Number of cols not found in ' + dicom_file)
             return
 
         scan.init_values(rows, cols, slice_location.shape[0])
