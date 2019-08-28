@@ -1323,16 +1323,25 @@ class Mesh(object):
 
         nodemap = {}
         for nn, h5node in enumerate(h5f.root.nodes.iterrows()):
-            nodemap[nn] = parse_id(h5node)
+            if isinstance(parse_id(h5node),int):
+                nodemap[nn] = parse_id(h5node)
+            elif isinstance(parse_id(h5node),bytes):
+                nodemap[nn] = int(parse_id(h5node).decode())
 
         elemmap = {}
         for ne, h5elem in enumerate(h5f.root.elements.iterrows()):
-            elemmap[ne] = parse_id(h5elem)
+            if isinstance(parse_id(h5elem),int):
+                elemmap[ne] = parse_id(h5elem)
+            elif isinstance(parse_id(h5elem),bytes):
+                elemmap[ne] = int(parse_id(h5elem).decode())
 
         node_pids = h5f.root.node_pids.read()
         # print h5f.root.params.read()
         for nn, h5node in enumerate(h5f.root.nodes.iterrows()):
-            node_id = parse_id(h5node)
+            if isinstance(parse_id(h5node),int):
+                node_id = parse_id(h5node)
+            elif isinstance(parse_id(h5node),bytes):
+                node_id = int(parse_id(h5node).decode())
 
             if h5node['type'].decode() == 'standard':
                 values = numpy.zeros(parse_shape(h5node))
@@ -1637,12 +1646,16 @@ class Mesh(object):
             cids.append(elem.cid)
         return cids
 
-    def get_element_ids(self, elements=None):
-        if elements == None:
+    def get_element_ids(self, elements=None , group= '_default'):
+        if elements == None :
             elements = self.elements
+        if not isinstance(elements, list):
+            elements = list(elements)
         ids = []
+        group_ids = [x.id for x in self.elements.get_groups(group)]
         for elem in elements:
-            ids.append(elem.id)
+            if elem.id in group_ids:
+                ids.append(elem.id)
         return ids
 
     def update_parameters(self, param_ids, values):
