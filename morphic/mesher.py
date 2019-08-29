@@ -1060,7 +1060,7 @@ class Mesh(object):
         if nodes == None:
             nodes = core.element_face_nodes(elem.basis, elem.node_ids)[face_index]
         sorted_nodes = [n for n in nodes]
-        sorted_nodes.sort()
+        #sorted_nodes.sort()
         face_id = '_' + '_'.join([str(i) for i in sorted_nodes])
         if face_id not in self.faces:
             face = Face(self, face_id)
@@ -1313,10 +1313,22 @@ class Mesh(object):
         h5f = tables.open_file(filepath, 'r')
 
         self.version = get_attribute(h5f.root, 'version')
-        self.created_at = get_attribute(h5f.root, 'created_at').encode().decode()
-        self.saved_at = get_attribute(h5f.root, 'saved_at').encode().decode()
-        self.label = get_attribute(h5f.root, 'label').encode().decode()
-        self.units = get_attribute(h5f.root, 'units').encode().decode()
+        if isinstance(get_attribute(h5f.root, 'created_at'),bytes):
+            self.created_at = get_attribute(h5f.root, 'created_at').decode()
+        else:
+            self.created_at = get_attribute(h5f.root, 'created_at').encode().decode()
+        if isinstance(get_attribute(h5f.root, 'saved_at'),bytes):
+            self.saved_at = get_attribute(h5f.root, 'saved_at').decode()
+        else:
+            self.saved_at = get_attribute(h5f.root, 'saved_at').encode().decode()
+        if isinstance(get_attribute(h5f.root, 'label'),bytes):
+            self.label = get_attribute(h5f.root, 'label').decode()
+        else:
+            self.label = get_attribute(h5f.root, 'label').encode().decode()
+        if isinstance(get_attribute(h5f.root, 'units'),bytes):
+            self.units = get_attribute(h5f.root, 'units').decode()
+        else:
+            self.units = get_attribute(h5f.root, 'units').encode().decode()
 
         if 'metadata' in h5f.root:
             self.metadata.load_pytables(h5f.root.metadata)
@@ -1326,7 +1338,7 @@ class Mesh(object):
             if isinstance(parse_id(h5node),int):
                 nodemap[nn] = parse_id(h5node)
             elif isinstance(parse_id(h5node),bytes):
-                nodemap[nn] = int(parse_id(h5node).decode())
+                nodemap[nn] = parse_id(h5node).decode()
 
         elemmap = {}
         for ne, h5elem in enumerate(h5f.root.elements.iterrows()):
@@ -1341,7 +1353,7 @@ class Mesh(object):
             if isinstance(parse_id(h5node),int):
                 node_id = parse_id(h5node)
             elif isinstance(parse_id(h5node),bytes):
-                node_id = int(parse_id(h5node).decode())
+                node_id = parse_id(h5node).decode()
 
             if h5node['type'].decode() == 'standard':
                 values = numpy.zeros(parse_shape(h5node))
@@ -1775,7 +1787,7 @@ class Mesh(object):
                 Xn.append(node.values[:, 0])
         return numpy.array([xn for xn in Xn])
 
-    def get_node_ids(self, nodes=None, group=b'_default'):
+    def get_node_ids(self, nodes=None, group='_default'):
         self.generate()
         if nodes != None:
             if not isinstance(nodes, list):
