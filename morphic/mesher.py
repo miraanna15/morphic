@@ -1338,7 +1338,10 @@ class Mesh(object):
             if isinstance(parse_id(h5node),int):
                 nodemap[nn] = parse_id(h5node)
             elif isinstance(parse_id(h5node),bytes):
-                nodemap[nn] = parse_id(h5node).decode()
+                try:
+                    nodemap[nn] = int(parse_id(h5node).decode())
+                except:
+                    nodemap[nn] = parse_id(h5node).decode()
 
         elemmap = {}
         for ne, h5elem in enumerate(h5f.root.elements.iterrows()):
@@ -1353,7 +1356,11 @@ class Mesh(object):
             if isinstance(parse_id(h5node),int):
                 node_id = parse_id(h5node)
             elif isinstance(parse_id(h5node),bytes):
-                node_id = parse_id(h5node).decode()
+                try:
+                    node_id = int(parse_id(h5node).decode())
+                except:
+                    node_id = parse_id(h5node).decode()
+
 
             if h5node['type'].decode() == 'standard':
                 values = numpy.zeros(parse_shape(h5node))
@@ -1387,13 +1394,19 @@ class Mesh(object):
         for h5group in h5f.root.node_groups.iterrows():
             idx = h5group['index_range']
             ids = [nodemap[nd] for nd in group_ids[idx[0]:idx[1]]]
-            self.nodes.add_to_group(ids, group=parse_id(h5group))
+            if isinstance(parse_id(h5group),bytes):
+                self.nodes.add_to_group(ids, group=parse_id(h5group).decode())
+            else:
+                self.nodes.add_to_group(ids, group=parse_id(h5group))
 
         group_ids = h5f.root.element_group_ids.read()
         for h5group in h5f.root.element_groups.iterrows():
             idx = h5group['index_range']
             ids = [elemmap[el] for el in group_ids[idx[0]:idx[1]]]
-            self.elements.add_to_group(ids, group=parse_id(h5group))
+            if isinstance(parse_id(h5group),bytes):
+                self.elements.add_to_group(ids, group=parse_id(h5group).decode())
+            else:
+                self.elements.add_to_group(ids, group=parse_id(h5group))
 
         h5f.close()
 
